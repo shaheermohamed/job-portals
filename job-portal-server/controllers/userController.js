@@ -34,14 +34,22 @@ exports.login = async (req, res) => {
     if (!user) {
       return res
         .status(401)
-        .json({ message: "Invalid email or password", loggedIn: false });
+        .json({
+          message: "Invalid email or password",
+          loggedIn: false,
+          user: {},
+        });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res
         .status(401)
-        .json({ message: "Invalid email or password", loggedIn: false });
+        .json({
+          message: "Invalid email or password",
+          loggedIn: false,
+          user: {},
+        });
     }
 
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
@@ -50,7 +58,9 @@ exports.login = async (req, res) => {
     res.status(200).json({ user, token, loggedIn: true });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error", loggedIn: false });
+    res
+      .status(500)
+      .json({ message: "Server error", loggedIn: false, user: {} });
   }
 };
 
@@ -58,9 +68,11 @@ exports.authenticateToken = (req, res, next) => {
   const token = req.header("Authorization")?.split(" ")[1];
 
   if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Access denied. No token provided.", loggedIn: false });
+    return res.status(401).json({
+      message: "Access denied. No token provided.",
+      loggedIn: false,
+      user: {},
+    });
   }
 
   try {
@@ -71,6 +83,8 @@ exports.authenticateToken = (req, res, next) => {
       .json({ loggedIn: true, message: "User authenticated", user: req.user });
     next();
   } catch (err) {
-    res.status(400).json({ loggedIn: false, message: "Invalid token." });
+    res
+      .status(400)
+      .json({ loggedIn: false, message: "Invalid token.", user: {} });
   }
 };
